@@ -1,0 +1,74 @@
+software =
+{
+    version = "@@DISTRO_VERSION@@";
+    hardware-compatibility: [ "1.0" ];
+
+    /* A/B eMMC update for Elegoo Centauri Carbon 1
+     *
+     * Partition layout (immutable):
+     *   mmcblk0p4  = bootA   (vfat, kernel+DTB+initramfs)
+     *   mmcblk0p5  = rootfsA (squashfs)
+     *   mmcblk0p7  = bootB   (vfat, kernel+DTB+initramfs)
+     *   mmcblk0p8  = rootfsB (squashfs)
+     *
+     * The running system selects the inactive slot via:
+     *   swupdate -e stable,update-slotB   (when running from slot A)
+     *   swupdate -e stable,update-slotA   (when running from slot B)
+     */
+
+    stable = {
+        update-slotB = {
+            images: (
+                {
+                    filename = "opencentauri-image-emmc-elegoo-centauri-carbon1.rootfs.squashfs";
+                    type = "raw";
+                    device = "/dev/mmcblk0p8";
+                    sha256 = "$swupdate_get_sha256(opencentauri-image-emmc-elegoo-centauri-carbon1.rootfs.squashfs)";
+                },
+                {
+                    filename = "opencentauri-boot.vfat";
+                    type = "raw";
+                    device = "/dev/mmcblk0p7";
+                    sha256 = "$swupdate_get_sha256(opencentauri-boot.vfat)";
+                }
+            );
+
+            bootenv: (
+                { name = "boot_partition"; value = "bootB"; },
+                { name = "root_partition"; value = "rootfsB"; },
+                { name = "boot_part"; value = "7"; },
+                { name = "mmc_root"; value = "/dev/mmcblk0p8"; },
+                { name = "dsp0_partition"; value = "dsp0B"; },
+                { name = "systemAB_next"; value = "B"; },
+                { name = "swu_version"; value = "@@DISTRO_VERSION@@"; }
+            );
+        };
+
+        update-slotA = {
+            images: (
+                {
+                    filename = "opencentauri-image-emmc-elegoo-centauri-carbon1.rootfs.squashfs";
+                    type = "raw";
+                    device = "/dev/mmcblk0p5";
+                    sha256 = "$swupdate_get_sha256(opencentauri-image-emmc-elegoo-centauri-carbon1.rootfs.squashfs)";
+                },
+                {
+                    filename = "opencentauri-boot.vfat";
+                    type = "raw";
+                    device = "/dev/mmcblk0p4";
+                    sha256 = "$swupdate_get_sha256(opencentauri-boot.vfat)";
+                }
+            );
+
+            bootenv: (
+                { name = "boot_partition"; value = "bootA"; },
+                { name = "root_partition"; value = "rootfsA"; },
+                { name = "boot_part"; value = "4"; },
+                { name = "mmc_root"; value = "/dev/mmcblk0p5"; },
+                { name = "dsp0_partition"; value = "dsp0A"; },
+                { name = "systemAB_next"; value = "A"; },
+                { name = "swu_version"; value = "@@DISTRO_VERSION@@"; }
+            );
+        };
+    };
+};
