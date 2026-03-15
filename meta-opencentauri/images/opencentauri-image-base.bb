@@ -17,6 +17,7 @@ CORE_IMAGE_EXTRA_INSTALL += "\
     rtw88 \
     wpa-supplicant \
     iw \
+    overlayfs-apps \
     kalico \
     moonraker \
     mainsail \

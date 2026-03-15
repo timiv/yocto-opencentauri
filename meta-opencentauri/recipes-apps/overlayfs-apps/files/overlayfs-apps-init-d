@@ -1,0 +1,65 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          overlayfs-apps
+# Required-Start:    $local_fs
+# Required-Stop:     $local_fs
+# Default-Start:     S
+# Default-Stop:
+# Short-Description: Mount writable overlays for printer apps
+### END INIT INFO
+
+WRITABLE=/data
+OVERLAY_BASE=$WRITABLE/overlay-root
+OVERLAYS="/usr/share/klipper /usr/share/moonraker /var/www/mainsail"
+
+mount_overlay() {
+    lowerdir=$1
+    upperdir=$OVERLAY_BASE/upper$lowerdir
+    workdir=$OVERLAY_BASE/workdir$lowerdir
+
+    if mountpoint -q "$lowerdir"; then
+        return 0
+    fi
+
+    if [ ! -d "$lowerdir" ]; then
+        echo "overlayfs-apps: $lowerdir missing, skipping overlay"
+        return 0
+    fi
+
+    mkdir -p "$upperdir" "$workdir"
+    mount -t overlay overlay \
+        -o lowerdir="$lowerdir",upperdir="$upperdir",workdir="$workdir" \
+        "$lowerdir"
+}
+
+umount_overlay() {
+    mountpoint=$1
+
+    if mountpoint -q "$mountpoint"; then
+        umount "$mountpoint"
+    fi
+}
+
+case "$1" in
+    start)
+        if ! mountpoint -q "$WRITABLE"; then
+            echo "overlayfs-apps: $WRITABLE not mounted, skipping"
+            exit 0
+        fi
+
+        for overlay in $OVERLAYS; do
+            mount_overlay "$overlay"
+        done
+        ;;
+    stop)
+        for overlay in /var/www/mainsail /usr/share/moonraker /usr/share/klipper; do
+            umount_overlay "$overlay"
+        done
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac
+
+exit 0
